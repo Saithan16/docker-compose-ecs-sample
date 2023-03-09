@@ -3,27 +3,18 @@ from flask import Flask
 import mysql.connector
 import uuid
 import os
-import json
+
 
 class DBManager:
     def __init__(self):
-        db_type = os.environ.get('DB_TYPE')
         password_file = os.environ.get('MY_SQL_PASSWORD_FILE','/run/secrets/db-password')
         pf = open(password_file, 'r')
-        password = None
-
-        if db_type == 'rds':
-            credentials = json.load(pf)
-            password = credentials["password"]
-        else:
-            password = pf.read()
-
         database = os.environ.get('MY_SQL_DATABASE','example')
         host = os.environ.get('MY_SQL_HOST',"db")
         user = os.environ.get('MY_SQL_USER',"root")
         self.connection = mysql.connector.connect(
             user=user, 
-            password=password,
+            password=pf.read(),
             host=host, # name of the mysql service as set in the docker-compose file
             database=database,
             auth_plugin='mysql_native_password'
@@ -85,6 +76,10 @@ def addName(id,name):
     for c in rec:
         response = response  + '<div>   ' + c + '</div>'
     return response
+
+@server.route('/test')
+def hello():
+    return "Hello World!"
 
 if __name__ == '__main__':
     server.run()
